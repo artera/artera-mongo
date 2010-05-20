@@ -16,7 +16,7 @@ class Artera_Mongo extends Mongo {
 			$options = $options->toArray();
 		parent::__construct($server, $options);
 		self::$_connection = $this;
-		if (preg_match('|/([a-zA-Z][a-zA-Z0-9]*)$|', $server, $matches))
+		if (preg_match('|/([a-zA-Z][a-zA-Z0-9_]*)$|', $server, $matches))
 			$this->setDefaultDB($matches[1]);
 	}
 
