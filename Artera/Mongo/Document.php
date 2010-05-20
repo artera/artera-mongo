@@ -71,6 +71,12 @@ class Artera_Mongo_Document implements ArrayAccess, Countable {
 		$this->reference = $reference;
 	}
 
+	public function getDBRef($reference) {
+		$doc = $this->collection->getDBRef($reference);
+		$doc->parent = $this;
+		return $doc;
+	}
+
 	public function __get($name) {
 		$value = null;
 		if (array_key_exists($name, $this->newdata))
@@ -78,11 +84,9 @@ class Artera_Mongo_Document implements ArrayAccess, Countable {
 		elseif (array_key_exists($name, $this->data) && !in_array($name, $this->unsetdata))
 			$value = $this->data[$name];
 		//Resolve reference
-		if (MongoDBRef::isRef($value)) {
-			$doc = $this->collection->getDBRef($value);
-			$doc->parent = $this;
-			return $doc;
-		} else
+		if (MongoDBRef::isRef($value))
+			return $this->getDBRef($value);
+		else
 			return $value;
 	}
 

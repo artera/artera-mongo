@@ -31,13 +31,23 @@ class Artera_Mongo_Document_Set implements ArrayAccess, Iterator, Countable {
 			$parent = $parent->parent();
 	}
 
-	protected function rootCollection() {
+	public function rootDocument() {
 		if (is_null($this->root)) {
 			$this->root = $this;
 			while ($this->root->parent != false)
 				$this->root = $this->root->parent;
 		}
-		return $this->root->collection;
+		return $this->root;
+	}
+
+	public function rootCollection() {
+		return $this->rootDocument()->collection;
+	}
+
+	public function getDBRef($reference) {
+		$doc = $this->rootCollection()->getDBRef($reference);
+		$doc->parent = $this;
+		return $doc;
 	}
 
 	public function count() {
@@ -70,10 +80,8 @@ class Artera_Mongo_Document_Set implements ArrayAccess, Iterator, Countable {
 		$value = $this->elements[$offset];
 		//Resolve reference
 		if (MongoDBRef::isRef($value)) {
-			$doc = $this->rootCollection()->getDBRef($value);
-			$doc->parent = $this;
-			$this->elements[$offset] = $doc;
-			return $doc;
+			$this->elements[$offset] = $this->getDBRef($value);
+			return $this->elements[$offset];
 		} else return $value;
 	}
 
