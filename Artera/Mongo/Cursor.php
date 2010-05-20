@@ -6,13 +6,47 @@
  * @license    New BSD License
  * @author     Massimiliano Torromeo
  */
-class Artera_Mongo_Cursor implements Countable {
+class Artera_Mongo_Cursor implements OuterIterator, Countable {
 	protected $cursor;
 	public $collection;
 
 	public function __construct($collection, $cursor) {
 		$this->collection = $collection;
 		$this->cursor = $cursor;
+	}
+
+	/**
+	 * Get the inner iterator
+	 *
+	 * @return MongoCursor
+	 */
+	public function getInnerIterator() {
+		return $this->cursor;
+	}
+
+	/**
+	 * Get the current value
+	 *
+	 * @return mixed
+	 */
+	public function current() {
+		return Artera_Mongo::createDocument($this->getInnerIterator()->current(), $this->collection->getName());
+	}
+
+	public function key() {
+		return $this->getInnerIterator()->key();
+	}
+
+	public function next() {
+		return $this->getInnerIterator()->next();
+	}
+
+	public function rewind() {
+		return $this->getInnerIterator()->rewind();
+	}
+
+	public function valid() {
+		return $this->getInnerIterator()->valid();
 	}
 
 	public function __get($name) {
@@ -26,6 +60,8 @@ class Artera_Mongo_Cursor implements Countable {
 	public function __call($name, $arguments) {
 		if (method_exists($this->cursor, $name))
 			return Artera_Mongo::bind($this, call_user_func_array(array($this->cursor, $name), $arguments));
+		else
+			throw new Artera_Mongo_Exception("No such method in MongoCursor: $name");
 	}
 
 	public function getNext() {
