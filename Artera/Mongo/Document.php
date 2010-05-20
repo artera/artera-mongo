@@ -38,7 +38,7 @@ class Artera_Mongo_Document implements ArrayAccess, Countable {
 
 	public function parentDocument() {
 		$parent = $this->parent;
-		while (!($parent instanceof Artera_Mongo_Document))
+		while ($parent != false && !($parent instanceof Artera_Mongo_Document))
 			$parent = $parent->parent;
 		return $parent;
 	}
