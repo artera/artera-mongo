@@ -110,6 +110,20 @@ class Artera_Mongo_Document implements ArrayAccess, Countable {
 		return $this;
 	}
 
+	public function remove($query=null) {
+		if (is_null($query) && !isset($this))
+			throw new Artera_Mongo_Exception('The remove method cannot be called statically without parameters. If you really want to remove every document in the collection call Artera_Mongo_Document::remove(array());');
+
+		if (is_null($query)) {
+			$this->collection->remove(array('_id' => $this->_id));
+		} else {
+			$collection = isset($this) ? $this->collection : Artera_Mongo::documentCollection(get_called_class());
+			$collection->remove($query);
+		}
+
+		return $this;
+	}
+
 	public function count() { return count($this->data(false)); }
 	public function offsetSet($offset, $value) { return $this->__set($offset, $value); }
 	public function offsetExists($offset) { return array_key_exists($name, $this->newdata) || (array_key_exists($name, $this->data) && !in_array($name, $this->unsetdata)); }
