@@ -183,7 +183,6 @@ class Artera_Mongo_Document implements ArrayAccess, Countable {
 				foreach($this->unsetdata as $name)
 					$update['$unset'][$name] = 1;
 			}
-			print_r($update);
 			$this->collection->update( array('_id' => $this->_id), $update );
 		} else {
 			$insdata = $this->data();
