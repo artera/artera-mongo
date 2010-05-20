@@ -92,11 +92,10 @@ class Artera_Mongo_Document implements ArrayAccess, Countable {
 
 	public function __set($name, $value) {
 		if (is_null($value)) {
-			if (array_key_exists($name, $this->data)) {
+			if (array_key_exists($name, $this->data))
 				$this->unsetdata[] = $name;
-				if (array_key_exists($name, $this->newdata))
-					unset($this->newdata[$name]);
-			}
+			if (array_key_exists($name, $this->newdata))
+				unset($this->newdata[$name]);
 		} else {
 			$this->newdata[$name] = Artera_Mongo::documentOrSet($value, $this->collection->getName().".$name");
 			if ($this->newdata[$name] instanceof Artera_Mongo_Document || $this->newdata[$name] instanceof Artera_Mongo_Document_Set)
@@ -197,7 +196,8 @@ class Artera_Mongo_Document implements ArrayAccess, Countable {
 				foreach($this->unsetdata as $name)
 					$update['$unset'][$name] = 1;
 			}
-			$this->collection->update( array('_id' => $this->_id), $update );
+			if (!empty($update))
+				$this->collection->update( array('_id' => $this->_id), $update );
 		} else {
 			$insdata = $this->data();
 			$this->collection->insert($insdata);
