@@ -10,14 +10,44 @@ class Artera_Mongo extends Mongo {
 	public static $_defaultDB;
 	protected static $_connection = null;
 	protected static $_map = array();
+	protected $options = array();
 
 	public function __construct($server='mongodb://localhost:27017', $options=array('connect' => false)) {
 		if ($options instanceof Zend_Config)
 			$options = $options->toArray();
-		parent::__construct($server, $options);
+		$this->options = array_merge(
+			array('connect' => false, 'initialize_on_connect' => true),
+			$options
+		);
+		parent::__construct($server, $this->options);
 		self::$_connection = $this;
 		if (preg_match('|/([a-zA-Z][a-zA-Z0-9_]*)$|', $server, $matches))
 			$this->setDefaultDB($matches[1]);
+	}
+
+	/**
+	 * Initializes database indexes if defined in the document classes that have been mapped
+	 */
+	public function initialize() {
+		$collections = self::defaultDB()->listCollections();
+		foreach ($collections as &$collection)
+			$collection = $collection->getName();
+		foreach (self::$_map as $collection => $class)
+			if (!in_array($collection, $collections)) {
+				$c = self::defaultDB()->createCollection($collection);
+
+				foreach ($class::indexes() as $index) {
+					$index = (array)$index;
+					$fields = array();
+					foreach ((array)$index[0] as $k => $field)
+						if (is_int($k))
+							$fields[$field] = 1;
+						else
+							$fields[$k] = $field;
+					$options = count($index) > 1 ? $index[1] : array();
+					$c->ensureIndex($fields, $options);
+				}
+			}
 	}
 
 	/**
@@ -54,8 +84,11 @@ class Artera_Mongo extends Mongo {
 	 * Ensures that the connection to the server is extabilished
 	 */
 	public static function checkConnection() {
-		if (!self::$_connection->connected)
+		if (!self::$_connection->connected) {
 			self::$_connection->connect();
+			if (self::$_connection->options['initialize_on_connect'])
+				self::$_connection->initialize();
+		}
 	}
 
 	/**

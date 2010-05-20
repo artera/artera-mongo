@@ -21,6 +21,8 @@ class Artera_Mongo_DB {
 	}
 
 	public function __call($name, $arguments) {
+		if (in_array($name, array('listCollections')))
+			Artera_Mongo::checkConnection();
 		if (method_exists($this->db, $name))
 			return Artera_Mongo::bind($this, call_user_func_array(array($this->db, $name), $arguments));
 	}

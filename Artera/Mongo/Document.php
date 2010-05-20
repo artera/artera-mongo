@@ -36,6 +36,10 @@ class Artera_Mongo_Document implements ArrayAccess, Countable {
 		$this->parent = $parent;
 	}
 
+	public static function indexes() {
+		return isset(static::$_indexes) ? static::$_indexes : array();
+	}
+
 	public function parentDocument() {
 		$parent = $this->parent;
 		while ($parent != false && !($parent instanceof Artera_Mongo_Document))
