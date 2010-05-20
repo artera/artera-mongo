@@ -104,6 +104,12 @@ class Artera_Mongo_Document implements ArrayAccess, Countable {
 		}
 	}
 
+	public function setData(array $data) {
+		foreach ($data as $name => $value)
+			$this->__set($name, $value);
+		return $this;
+	}
+
 	public function count() { return count($this->data(false)); }
 	public function offsetSet($offset, $value) { return $this->__set($offset, $value); }
 	public function offsetExists($offset) { return array_key_exists($name, $this->newdata) || (array_key_exists($name, $this->data) && !in_array($name, $this->unsetdata)); }
