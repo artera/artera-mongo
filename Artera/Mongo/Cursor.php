@@ -69,7 +69,7 @@ class Artera_Mongo_Cursor implements OuterIterator, Countable {
 		return Artera_Mongo::createDocument($next, $this->collection->getName());
 	}
 
-	public function count() {
-		return $this->cursor->count();
+	public function count($all = FALSE) {
+		return $this->cursor->count($all);
 	}
 }
