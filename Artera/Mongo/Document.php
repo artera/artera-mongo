@@ -77,6 +77,10 @@ class Artera_Mongo_Document implements ArrayAccess, Countable {
 		return $doc;
 	}
 
+	public function __isset($name) {
+		return array_key_exists($name, $this->newdata) || (array_key_exists($name, $this->data) && !in_array($name, $this->unsetdata));
+	}
+
 	public function __get($name) {
 		$value = null;
 		if (array_key_exists($name, $this->newdata))
@@ -125,7 +129,7 @@ class Artera_Mongo_Document implements ArrayAccess, Countable {
 
 	public function count() { return count($this->data(false)); }
 	public function offsetSet($offset, $value) { return $this->__set($offset, $value); }
-	public function offsetExists($offset) { return array_key_exists($name, $this->newdata) || (array_key_exists($name, $this->data) && !in_array($name, $this->unsetdata)); }
+	public function offsetExists($offset) { return $this->__isset($offset); }
 	public function offsetUnset($offset) { $this->__set($offset, null); }
 	public function offsetGet($offset) { return $this->__get($offset); }
 
