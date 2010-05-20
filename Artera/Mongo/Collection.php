@@ -31,6 +31,8 @@ class Artera_Mongo_Collection {
 	}
 
 	public function findOne($query=array(), $fields=array()) {
+		if (is_string($query)) $query = new MongoId($query);
+		if ($query instanceof MongoId) $query = array('_id' => $query);
 		$data = $this->collection->findOne($query, $fields);
 		if (is_null($data)) return null;
 		return Artera_Mongo::createDocument($data, $this->collection->getName());

@@ -44,12 +44,14 @@ class Artera_Mongo_Document implements ArrayAccess, Countable {
 	}
 
 	public static function find($query=array(), $fields=array()) {
+		if (is_string($query)) $query = new MongoId($query);
 		if ($query instanceof MongoId) $query = array('_id' => $query);
 		$coll = Artera_Mongo::documentCollection(get_called_class());
 		return $coll->find($query, $fields);
 	}
 
 	public static function findOne($query=array(), $fields=array()) {
+		if (is_string($query)) $query = new MongoId($query);
 		if ($query instanceof MongoId) $query = array('_id' => $query);
 		$coll = Artera_Mongo::documentCollection(get_called_class());
 		return $coll->findOne($query, $fields);
