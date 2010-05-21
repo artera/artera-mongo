@@ -12,7 +12,7 @@ class Artera_Mongo_Document_Set extends Artera_Properties implements ArrayAccess
 	protected $modified = false;
 	protected $root = null;
 	protected $_parent = null;
-	protected $_properties = array('parent' => array('setter' => 'setParent', 'var' => '_parent'));
+	protected $_properties = array('parent' => array('setter' => 'setParent', 'getter' => '$_parent'));
 
 	public function __construct($elements=array(), $parentPath) {
 		$this->parentPath = $parentPath;

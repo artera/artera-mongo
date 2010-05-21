@@ -15,25 +15,21 @@ class Artera_Properties {
 					$this->{$this->_properties[$name]['setter']}($value);
 				else
 					throw new Artera_Properties_Exception("Undefined setter for property '$name'.");
-			} else {
-				throw new Artera_Properties_Exception_ReadOnly($name);
-			}
-		} else {
-			throw new Artera_Properties_Exception_Undefined($name);
-		}
+			} else throw new Artera_Properties_Exception_ReadOnly($name);
+		} else throw new Artera_Properties_Exception_Undefined($name);
 	}
 
 	public function __get($name) {
 		if (isset($this->_properties[$name])) {
-			if (isset($this->_properties[$name]['getter']) && method_exists($this, $this->_properties[$name]['getter'])) {
-				return $this->{$this->_properties[$name]['getter']}();
-			} elseif (isset($this->_properties[$name]['var'])) {
-				return $this->{$this->_properties[$name]['var']};
-			} else {
-				throw new Artera_Properties_Exception("Undefined getter/var for property '$name'.");
-			}
-		} else {
-			throw new Artera_Properties_Exception_Undefined($name);
-		}
+			if (isset($this->_properties[$name]['getter'])) {
+				$getter = $this->_properties[$name]['getter'];
+				if (!empty($getter) && $getter[0]=='$') {
+					$getter = substr($getter, 1);
+					return $this->$getter;
+				} elseif (method_exists($this, $getter)) {
+					return $this->$getter();
+				} else throw new Artera_Properties_Exception("Undefined getter for property '$name'.");
+			} else throw new Artera_Properties_Exception("Undefined getter for property '$name'.");
+		} else throw new Artera_Properties_Exception_Undefined($name);
 	}
 }

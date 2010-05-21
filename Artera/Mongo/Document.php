@@ -13,7 +13,7 @@ class Artera_Mongo_Document extends Artera_Properties implements ArrayAccess, Co
 	public $collection = null;
 	protected $_reference = null;
 	protected $_parent = null;
-	protected $_properties = array('parent' => array('setter' => 'setParent', 'var' => '_parent'));
+	protected $_properties = array('parent' => array('setter' => 'setParent', 'getter' => '$_parent'));
 
 	public function __construct($data=array(), $parent=null, $collection=null) {
 		if (!is_array($data))
@@ -26,7 +26,7 @@ class Artera_Mongo_Document extends Artera_Properties implements ArrayAccess, Co
 		else
 			$this->collection = Artera_Mongo::defaultDB()->selectCollection($collection);
 
-		$this->setData($data);
+		$this->setData($data, true);
 		$this->parent = $parent;
 	}
 
@@ -126,16 +126,24 @@ class Artera_Mongo_Document extends Artera_Properties implements ArrayAccess, Co
 				if (array_key_exists($name, $this->_newdata))
 					unset($this->_newdata[$name]);
 			} else {
-				$this->_newdata[$name] = Artera_Mongo::documentOrSet($value, $this->collection->getName().".$name");
-				if ($this->_newdata[$name] instanceof Artera_Mongo_Document || $this->_newdata[$name] instanceof Artera_Mongo_Document_Set)
-					$this->_newdata[$name]->parent = $this;
+				$this->_newdata[$name] = $this->translate($name, $value);
 			}
 		}
 	}
 
-	public function setData(array $data) {
+	protected function translate($name, $value) {
+		$value = Artera_Mongo::documentOrSet($value, $this->collection->getName().".$name");
+		if ($value instanceof Artera_Mongo_Document || $value instanceof Artera_Mongo_Document_Set)
+			$value->parent = $this;
+		return $value;
+	}
+
+	public function setData(array $data, $originalData=false) {
 		foreach ($data as $name => $value)
-			$this->__set($name, $value);
+			if ($originalData)
+				$this->_data[$name] = $this->translate($name, $value);
+			else
+				$this->__set($name, $value);
 		return $this;
 	}
 
