@@ -95,7 +95,7 @@ class Artera_Mongo_Document extends Artera_Properties implements ArrayAccess, Co
 		return array_key_exists($name, $this->_newdata) || (array_key_exists($name, $this->_data) && !in_array($name, $this->_unsetdata));
 	}
 
-	public function &__get($name) {
+	public function __get($name) {
 		try {
 			return parent::__get($name);
 		} catch (Artera_Properties_Exception_Undefined $e) {

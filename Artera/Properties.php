@@ -23,7 +23,7 @@ class Artera_Properties {
 		}
 	}
 
-	public function &__get($name) {
+	public function __get($name) {
 		if (isset($this->_properties[$name])) {
 			if (isset($this->_properties[$name]['getter']) && method_exists($this, $this->_properties[$name]['getter'])) {
 				return $this->{$this->_properties[$name]['getter']}();
