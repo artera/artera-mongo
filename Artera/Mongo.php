@@ -144,7 +144,7 @@ class Artera_Mongo extends Mongo {
 	 * @return mixed
 	 */
 	public static function documentOrSet($data, $path) {
-		if (is_array($data)) {
+		if (is_array($data) && !MongoDBRef::isRef($data)) {
 			if (key($data) != null && !is_int(key($data)))
 				$data = self::createDocument($data, $path);
 			else
@@ -162,9 +162,9 @@ class Artera_Mongo extends Mongo {
 	 */
 	public static function createDocument($data, $collection) {
 		if (array_key_exists($collection, self::$_map))
-			return new self::$_map[$collection]($data, false, $collection);
+			return new self::$_map[$collection]($data, null, $collection);
 		else
-			return new Artera_Mongo_Document($data, false, $collection);
+			return new Artera_Mongo_Document($data, null, $collection);
 	}
 
 	/**

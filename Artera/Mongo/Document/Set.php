@@ -6,35 +6,42 @@
  * @license    New BSD License
  * @author     Massimiliano Torromeo
  */
-class Artera_Mongo_Document_Set implements ArrayAccess, Iterator, Countable {
+class Artera_Mongo_Document_Set extends Artera_Properties implements ArrayAccess, Iterator, Countable {
 	protected $elements = array();
 	protected $parentPath = null;
 	protected $modified = false;
 	protected $root = null;
-	public $parent = false;
+	protected $_parent = null;
+	protected $_properties = array('parent' => array('setter' => 'setParent', 'var' => '_parent'));
 
 	public function __construct($elements=array(), $parentPath) {
-		$this->elements = $elements;
 		$this->parentPath = $parentPath;
-		foreach ($this->elements as &$el) {
-			if (!MongoDBRef::isRef($el)) {
-				$el = Artera_Mongo::documentOrSet($el, "{$this->parentPath}.\$");
-				if ($el instanceof Artera_Mongo_Document || $el instanceof Artera_Mongo_Document_Set)
-					$el->parent = $this;
-			}
-		}
+		foreach ($elements as $el)
+			$this->offsetSet(null, $el);
 	}
 
+	public function setParent($parent) {
+		if (!is_null($parent) && !$parent instanceof Artera_Mongo_Document && !$parent instanceof Artera_Mongo_Document_Set)
+			throw new Artera_Mongo_Exception('Invalid parent. Parent must be one of NULL, Artera_Mongo_Document or Artera_Mongo_Document_Set');
+		$this->_parent = $parent;
+	}
+
+	/**
+	 * Returns the parent Artera_Mongo_Document if present, NULL if not parent is found
+	 *
+	 * @return Artera_Mongo_Document
+	 */
 	public function parentDocument() {
 		$parent = $this->parent;
-		while ($parent !== false && $parent != Artera_Mongo_Document)
+		while (!is_null($parent) && $parent != Artera_Mongo_Document)
 			$parent = $parent->parent();
+		return $parent;
 	}
 
 	public function rootDocument() {
 		if (is_null($this->root)) {
 			$this->root = $this;
-			while ($this->root->parent != false)
+			while (!is_null($this->root->parent))
 				$this->root = $this->root->parent;
 		}
 		return $this->root;
