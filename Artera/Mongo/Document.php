@@ -99,6 +99,10 @@ class Artera_Mongo_Document implements ArrayAccess, Countable {
 	}
 
 	public function __set($name, $value) {
+		if (strpos($name, '.') !== false)
+			throw new Artera_Mongo_Exception("The '.' character must not appear anywhere in the key name.");
+		if (strlen($name)>0 && $name[0]=='$')
+			throw new Artera_Mongo_Exception("The '$' character must not be the first character in the key name.");
 		if (is_null($value)) {
 			if (array_key_exists($name, $this->_data))
 				$this->_unsetdata[] = $name;
