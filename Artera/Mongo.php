@@ -52,7 +52,6 @@ class Artera_Mongo extends Mongo {
 
 	/**
 	 * Returns the default database either specified with setDefaultDB or auto-detected from the connection string
-	 *
 	 * @return Artera_Mongo_DB
 	 */
 	public static function defaultDB() {
@@ -64,7 +63,6 @@ class Artera_Mongo extends Mongo {
 
 	/**
 	 * Sets the default database to use
-	 *
 	 * @param string $db
 	 */
 	public static function setDefaultDB($db) {
@@ -73,7 +71,6 @@ class Artera_Mongo extends Mongo {
 
 	/**
 	 * Returns the last Mongo connection initialized
-	 *
 	 * @return Artera_Mongo
 	 */
 	public static function connection() {
@@ -93,8 +90,7 @@ class Artera_Mongo extends Mongo {
 
 	/**
 	 * Translates standard PECL Mongo classes to their Artera_Mongo equivalents when necessary
-	 *
-	 * @param mixed $parent
+	 * @param Artera_Mongo_Cursor|Artera_Mongo_Collection $parent
 	 * @param mixed $value
 	 * @return mixed
 	 */
@@ -116,7 +112,6 @@ class Artera_Mongo extends Mongo {
 
 	/**
 	 * Maps a mongodb collection to a document class
-	 *
 	 * @param string $collection
 	 * @param string $class
 	 */
@@ -126,7 +121,6 @@ class Artera_Mongo extends Mongo {
 
 	/**
 	 * Returns the mapped collection for the specified document class
-	 *
 	 * @param string $class
 	 * @return Artera_Mongo_Collection
 	 */
@@ -138,24 +132,30 @@ class Artera_Mongo extends Mongo {
 
 	/**
 	 * Creates an instance of Artera_Mongo_Document or Artera_Mongo_Document_Set as necessary depending on the type of data supplied
-	 *
 	 * @param mixed $data
 	 * @param string $path
+	 * @param Artera_Mongo_Document|Artera_Mongo_Document_Set $parent
+	 * @param boolean $originalData
 	 * @return mixed
 	 */
-	public static function documentOrSet($data, $path) {
+	public static function documentOrSet($data, $path, $parent=false, $originalData=false) {
+		if (!$originalData)
+			$loadData = $data;
 		if (is_array($data) && !MongoDBRef::isRef($data)) {
 			if (key($data) != null && !is_int(key($data)))
-				$data = self::createDocument($data, $path);
+				$data = self::createDocument($originalData ? $data : array(), $path);
 			else
-				$data = new Artera_Mongo_Document_Set($data, $path);
+				$data = new Artera_Mongo_Document_Set($originalData ? $data : array(), $path);
+			if ($parent !== false)
+				$data->setParent($parent);
+			if (!$originalData)
+				$data->setData($loadData);
 		}
 		return $data;
 	}
 
 	/**
 	 * Creates the correct Artera_Mongo_Document instance for the specified collection
-	 *
 	 * @param mixed $data
 	 * @param string $collection
 	 * @return Artera_Mongo_Document
@@ -169,7 +169,6 @@ class Artera_Mongo extends Mongo {
 
 	/**
 	 * Returns the specified database instance
-	 *
 	 * @param string $dbname
 	 * @return Artera_Mongo_DB
 	 */

@@ -6,18 +6,24 @@
  * @license    New BSD License
  * @author     Massimiliano Torromeo
  */
-class Artera_Mongo_Document_Set extends Artera_Properties implements ArrayAccess, Iterator, Countable {
+class Artera_Mongo_Document_Set implements ArrayAccess, Iterator, Countable {
 	protected $elements = array();
 	protected $parentPath = null;
+	protected $elementPath = null;
 	protected $modified = false;
 	protected $root = null;
 	protected $_parent = null;
-	protected $_properties = array('parent' => array('setter' => 'setParent', 'getter' => '$_parent'));
 
 	public function __construct($elements=array(), $parentPath) {
 		$this->parentPath = $parentPath;
-		foreach ($elements as $el)
-			$this->offsetSet(null, $el);
+		$pathElements = explode('.', $parentPath, 2);
+		$this->elementPath = $pathElements[1].'.$';
+		$this->setData($elements, true);
+		$this->modified = false;
+	}
+
+	public function parent() {
+		return $this->_parent;
 	}
 
 	public function setParent($parent) {
@@ -32,8 +38,8 @@ class Artera_Mongo_Document_Set extends Artera_Properties implements ArrayAccess
 	 * @return Artera_Mongo_Document
 	 */
 	public function parentDocument() {
-		$parent = $this->parent;
-		while (!is_null($parent) && $parent != Artera_Mongo_Document)
+		$parent = $this->parent();
+		while (!is_null($parent) && !($parent instanceof Artera_Mongo_Document))
 			$parent = $parent->parent();
 		return $parent;
 	}
@@ -41,8 +47,8 @@ class Artera_Mongo_Document_Set extends Artera_Properties implements ArrayAccess
 	public function rootDocument() {
 		if (is_null($this->root)) {
 			$this->root = $this;
-			while (!is_null($this->root->parent))
-				$this->root = $this->root->parent;
+			while (!is_null($this->root->parent()))
+				$this->root = $this->root->parent();
 		}
 		return $this->root;
 	}
@@ -53,7 +59,7 @@ class Artera_Mongo_Document_Set extends Artera_Properties implements ArrayAccess
 
 	public function getDBRef($reference) {
 		$doc = $this->rootCollection()->getDBRef($reference);
-		$doc->parent = $this;
+		$doc->setParent($this);
 		return $doc;
 	}
 
@@ -61,11 +67,26 @@ class Artera_Mongo_Document_Set extends Artera_Properties implements ArrayAccess
 		return count($this->elements);
 	}
 
+	protected function translate($value, $originalData=false) {
+		return Artera_Mongo::documentOrSet($value, "{$this->parentPath}.\$", $this, $originalData);
+	}
+
+	public function setData(array $data, $originalData=false) {
+		foreach ($data as $value)
+			if ($originalData)
+				$this->elements[] = $this->translate($value, true);
+			else
+				$this->offsetSet(null, $value);
+		return $this;
+	}
+
 	public function offsetSet($offset, $value) {
+		$pdoc = $this->parentDocument();
+		if (!is_null($pdoc))
+			$pdoc->fireEvent("pre-set-{$this->elementPath}", array($this->elementPath, $this->offsetGet($offset), &$value));
+
 		$this->modified = true;
-		$value = Artera_Mongo::documentOrSet($value, "{$this->parentPath}.\$");
-		if ($value instanceof Artera_Mongo_Document || $value instanceof Artera_Mongo_Document_Set)
-			$value->parent = $this;
+		$value = $this->translate($value);
 		if (is_null($offset))
 			$this->elements[] = $value;
 		else

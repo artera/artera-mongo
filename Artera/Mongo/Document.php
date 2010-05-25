@@ -6,14 +6,13 @@
  * @license    New BSD License
  * @author     Massimiliano Torromeo
  */
-class Artera_Mongo_Document extends Artera_Properties implements ArrayAccess, Countable {
+class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Countable {
 	protected $_data = array();
 	protected $_newdata = array();
 	protected $_unsetdata = array();
 	public $collection = null;
 	protected $_reference = null;
 	protected $_parent = null;
-	protected $_properties = array('parent' => array('setter' => 'setParent', 'getter' => '$_parent'));
 
 	public function __construct($data=array(), $parent=null, $collection=null) {
 		if (!is_array($data))
@@ -27,8 +26,11 @@ class Artera_Mongo_Document extends Artera_Properties implements ArrayAccess, Co
 			$this->collection = Artera_Mongo::defaultDB()->selectCollection($collection);
 
 		$this->setData($data, true);
-		$this->parent = $parent;
+		$this->setParent($parent);
+		$this->initialize();
 	}
+
+	public function initialize() {}
 
 	/**
 	 * Returns defined indexes for the collection mapped to this document
@@ -37,6 +39,10 @@ class Artera_Mongo_Document extends Artera_Properties implements ArrayAccess, Co
 	 */
 	public static function indexes() {
 		return isset(static::$_indexes) ? static::$_indexes : array();
+	}
+
+	public function parent() {
+		return $this->_parent;
 	}
 
 	public function setParent($parent) {
@@ -51,9 +57,9 @@ class Artera_Mongo_Document extends Artera_Properties implements ArrayAccess, Co
 	 * @return Artera_Mongo_Document
 	 */
 	public function parentDocument() {
-		$parent = $this->parent;
+		$parent = $this->parent();
 		while (!is_null($parent) && !($parent instanceof Artera_Mongo_Document))
-			$parent = $parent->parent;
+			$parent = $parent->parent();
 		return $parent;
 	}
 
@@ -87,7 +93,7 @@ class Artera_Mongo_Document extends Artera_Properties implements ArrayAccess, Co
 
 	public function getDBRef($reference) {
 		$doc = $this->collection->getDBRef($reference);
-		$doc->parent = $this;
+		$doc->setParent($this);
 		return $doc;
 	}
 
@@ -96,52 +102,43 @@ class Artera_Mongo_Document extends Artera_Properties implements ArrayAccess, Co
 	}
 
 	public function __get($name) {
-		try {
-			return parent::__get($name);
-		} catch (Artera_Properties_Exception_Undefined $e) {
-			$value = null;
-			if (array_key_exists($name, $this->_newdata))
-				$value = $this->_newdata[$name];
-			elseif (array_key_exists($name, $this->_data) && !in_array($name, $this->_unsetdata))
-				$value = $this->_data[$name];
-			//Resolve reference
-			if (MongoDBRef::isRef($value))
-				return $this->getDBRef($value);
-			else
-				return $value;
-		}
+		$value = null;
+		if (array_key_exists($name, $this->_newdata))
+			$value = $this->_newdata[$name];
+		elseif (array_key_exists($name, $this->_data) && !in_array($name, $this->_unsetdata))
+			$value = $this->_data[$name];
+		//Resolve reference
+		if (MongoDBRef::isRef($value))
+			return $this->getDBRef($value);
+		else
+			return $value;
 	}
 
 	public function __set($name, $value) {
-		try {
-			parent::__set($name, $value);
-		} catch (Artera_Properties_Exception_Undefined $e) {
-			if (strpos($name, '.') !== false)
-				throw new Artera_Mongo_Exception("The '.' character must not appear anywhere in the key name.");
+		if (strpos($name, '.') !== false)
+			throw new Artera_Mongo_Exception("The '.' character must not appear anywhere in the key name.");
 // 			if (strlen($name)>0 && $name[0]=='$')
 // 				throw new Artera_Mongo_Exception("The '$' character must not be the first character in the key name.");
-			if (is_null($value)) {
-				if (array_key_exists($name, $this->_data))
-					$this->_unsetdata[] = $name;
-				if (array_key_exists($name, $this->_newdata))
-					unset($this->_newdata[$name]);
-			} else {
-				$this->_newdata[$name] = $this->translate($name, $value);
-			}
+		$this->fireEvent("pre-set", array($name, $this->__get($name), &$value));
+		$this->fireEvent("pre-set-$name", array($name, $this->__get($name), &$value));
+		if (is_null($value)) {
+			if (array_key_exists($name, $this->_data))
+				$this->_unsetdata[] = $name;
+			if (array_key_exists($name, $this->_newdata))
+				unset($this->_newdata[$name]);
+		} else {
+			$this->_newdata[$name] = $this->translate($name, $value);
 		}
 	}
 
-	protected function translate($name, $value) {
-		$value = Artera_Mongo::documentOrSet($value, $this->collection->getName().".$name");
-		if ($value instanceof Artera_Mongo_Document || $value instanceof Artera_Mongo_Document_Set)
-			$value->parent = $this;
-		return $value;
+	protected function translate($name, $value, $originalData=false) {
+		return Artera_Mongo::documentOrSet($value, $this->collection->getName().".$name", $this, $originalData);
 	}
 
 	public function setData(array $data, $originalData=false) {
 		foreach ($data as $name => $value)
 			if ($originalData)
-				$this->_data[$name] = $this->translate($name, $value);
+				$this->_data[$name] = $this->translate($name, $value, true);
 			else
 				$this->__set($name, $value);
 		return $this;
@@ -195,10 +192,10 @@ class Artera_Mongo_Document extends Artera_Properties implements ArrayAccess, Co
 	}
 
 	public function save() {
-		if (!$this->isReference() && !is_null($this->parent) && !array_key_exists('_id', $this->_data)) {
+		if (!$this->isReference() && !is_null($this->parent()) && !array_key_exists('_id', $this->_data)) {
 			$root = $this;
-			while (!is_null($root->parent))
-				$root = $root->parent;
+			while (!is_null($root->parent()))
+				$root = $root->parent();
 			if ($root instanceof Artera_Mongo_Document_Set)
 				throw new Artera_Mongo_Exception('Invalid Document_Set. A Document_Set must have a parent.');
 			return $root->save();
@@ -206,9 +203,17 @@ class Artera_Mongo_Document extends Artera_Properties implements ArrayAccess, Co
 
 		Artera_Mongo::checkConnection();
 
+		$isInsert = !isset($this->_id);
+		$this->fireEvent('pre-save', array($this));
+		$this->fireEvent('pre-'.($isInsert ? 'insert' : 'update'), array($this));
+
 		$data = $this->data(false);
 
-		if (array_key_exists('_id', $this->_data)) {
+		if ($isInsert) {
+			$insdata = $this->data();
+			$this->collection->insert($insdata);
+			$data['_id'] = $insdata['_id'];
+		} else {
 			$update = array();
 			if (count($this->_newdata)) {
 				$update['$set'] = array();
@@ -236,14 +241,13 @@ class Artera_Mongo_Document extends Artera_Properties implements ArrayAccess, Co
 			}
 			if (!empty($update))
 				$this->collection->update( array('_id' => $this->_id), $update );
-		} else {
-			$insdata = $this->data();
-			$this->collection->insert($insdata);
-			$data['_id'] = $insdata['_id'];
 		}
 
 		$this->_data = $data;
 		$this->_newdata = array();
 		$this->_unsetdata = array();
+
+		$this->fireEvent('post-save', array($this));
+		$this->fireEvent('post-'.($isInsert ? 'insert' : 'update'), array($this));
 	}
 }

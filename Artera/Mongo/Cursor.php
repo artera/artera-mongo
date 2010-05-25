@@ -30,7 +30,10 @@ class Artera_Mongo_Cursor implements OuterIterator, Countable {
 	 * @return mixed
 	 */
 	public function current() {
-		return Artera_Mongo::createDocument($this->getInnerIterator()->current(), $this->collection->getName());
+		$current = $this->getInnerIterator()->current();
+		if (!is_null($current))
+			$current = Artera_Mongo::createDocument($current, $this->collection->getName());
+		return $current;
 	}
 
 	public function key() {
