@@ -2,8 +2,11 @@
 /**
  * @category   Artera
  * @package    Artera_Mongo
+ */
+/**
+ * @package    Artera_Mongo
  * @copyright  Artera S.r.l.
- * @license    New BSD License
+ * @license    http://opensource.org/licenses/bsd-license.php New BSD License
  * @author     Massimiliano Torromeo
  */
 class Artera_Mongo_DB {

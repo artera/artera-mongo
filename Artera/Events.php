@@ -1,9 +1,14 @@
 <?php
 /**
+ * @category   Artera
+ * @package    Artera_Events
+ */
+/**
  * The Artera_Events class implements the required functionality for events dispatching.
  * @category   Artera
+ * @package    Artera_Events
  * @copyright  Artera S.r.l.
- * @license    New BSD License
+ * @license    http://opensource.org/licenses/bsd-license.php New BSD License
  * @author     Massimiliano Torromeo
  */
 class Artera_Events {
@@ -11,6 +16,7 @@ class Artera_Events {
 
 	/**
 	 * Attach an event by name. The callback will be called when the named event is fired.
+	 *
 	 * Example usage:
 	 * <code>
 	 * <?php
@@ -18,6 +24,7 @@ class Artera_Events {
 	 * $myclass->addEvent('onComplete', 'test');
 	 * ?>
 	 * </code>
+	 *
 	 * @param string $name The name of the event.
 	 * @param mixed $callback The callback to be called when the event is fired.
 	 */
@@ -29,12 +36,14 @@ class Artera_Events {
 
 	/**
 	 * Fires the named event. The specified arguments will be passed to the registered callbacks.
+	 *
 	 * Example usage:
 	 * <code>
 	 * <?php
 	 * $myclass->fireEvent('onComplete');
 	 * ?>
 	 * </code>
+	 *
 	 * @see addEvent()
 	 * @param string $name The name of the event to fire.
 	 * @param mixed $arguments The arguments to pass to the registered callbacks.
