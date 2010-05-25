@@ -11,6 +11,13 @@ class Artera_Events {
 
 	/**
 	 * Attach an event by name. The callback will be called when the named event is fired.
+	 * Example usage:
+	 * <code>
+	 * <?php
+	 * function test { echo 'Process completed!'; }
+	 * $myclass->addEvent('onComplete', 'test');
+	 * ?>
+	 * </code>
 	 * @param string $name The name of the event.
 	 * @param mixed $callback The callback to be called when the event is fired.
 	 */
@@ -22,6 +29,12 @@ class Artera_Events {
 
 	/**
 	 * Fires the named event. The specified arguments will be passed to the registered callbacks.
+	 * Example usage:
+	 * <code>
+	 * <?php
+	 * $myclass->fireEvent('onComplete');
+	 * ?>
+	 * </code>
 	 * @see addEvent()
 	 * @param string $name The name of the event to fire.
 	 * @param mixed $arguments The arguments to pass to the registered callbacks.
