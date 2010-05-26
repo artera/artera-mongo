@@ -114,12 +114,13 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Counta
 	 * This method is used to query the collection mapped to this Document and works similarly to its
 	 * {@link http://www.php.net/manual/en/mongocollection.find.php MongoCollection} equivalent except that
 	 * it has been modified to also accept an id (both as string or {@link http://www.php.net/manual/en/class.mongoid.php MongoId})
-	 * as its first parameter.
+	 * or a JS function that will automatically be converted to MongoCode if the string starts with 'function' as its first parameter.
 	 * <code>
 	 * <?php
 	 * class BlogPosts extends Artera_Mongo_Document {}
 	 * Artera_Mongo::map('posts', 'BlogPosts');
 	 * $posts = BlogPosts::find(array('author' => 'Foo Bar'))->limit(10);
+	 * $posts = BlogPosts::find('function() { return this.author == 'Foo' || this.author == 'Bar'; }');
 	 * ?>
 	 * </code>
 	 * @param mixed $query The query or a document id
@@ -127,7 +128,7 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Counta
 	 * @return Artera_Mongo_Cursor
 	 */
 	public static function find($query=array(), $fields=array()) {
-		if (is_string($query)) $query = new MongoId($query);
+		if (is_string($query)) $query = substr($query,0,8)=='function' ? new MongoCode($query) : new MongoId($query);
 		if ($query instanceof MongoId) $query = array('_id' => $query);
 		$coll = Artera_Mongo::documentCollection(get_called_class());
 		return $coll->find($query, $fields);
@@ -137,7 +138,7 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Counta
 	 * This method is used to query the collection mapped to this Document and works similarly to its
 	 * {@link http://www.php.net/manual/en/mongocollection.findOne.php MongoCollection} equivalent except that
 	 * it has been modified to also accept an id (both as string or {@link http://www.php.net/manual/en/class.mongoid.php MongoId})
-	 * as its first parameter.
+	 * or a JS function that will automatically be converted to MongoCode if the string starts with 'function' as its first parameter.
 	 * <code>
 	 * <?php
 	 * class BlogPosts extends Artera_Mongo_Document {}
@@ -150,7 +151,7 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Counta
 	 * @return Artera_Mongo_Document
 	 */
 	public static function findOne($query=array(), $fields=array()) {
-		if (is_string($query)) $query = new MongoId($query);
+		if (is_string($query)) $query = substr($query,0,8)=='function' ? new MongoCode($query) : new MongoId($query);
 		if ($query instanceof MongoId) $query = array('_id' => $query);
 		$coll = Artera_Mongo::documentCollection(get_called_class());
 		return $coll->findOne($query, $fields);
