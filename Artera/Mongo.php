@@ -11,6 +11,7 @@
  */
 class Artera_Mongo extends Mongo {
 	public static $_defaultDB;
+	protected static $_defaultDocumentClass = 'Artera_Mongo_Document';
 	protected static $_connection = null;
 	protected static $_map = array();
 	protected $options = array();
@@ -32,13 +33,12 @@ class Artera_Mongo extends Mongo {
 	 * Initializes database indexes if defined in the document classes that have been mapped
 	 */
 	public function initialize() {
-		$collections = self::defaultDB()->listCollections();
-		foreach ($collections as &$collection)
-			$collection = $collection->getName();
+		$collections = array();
+		foreach (self::defaultDB()->listCollections() as $collection)
+			$collections[] = $collection->getName();
 		foreach (self::$_map as $collection => $class)
 			if (!in_array($collection, $collections)) {
 				$c = self::defaultDB()->createCollection($collection);
-
 				foreach ($class::indexes() as $index) {
 					$index = (array)$index;
 					$fields = array();
@@ -70,6 +70,16 @@ class Artera_Mongo extends Mongo {
 	 */
 	public static function setDefaultDB($db) {
 		self::$_defaultDB = $db;
+	}
+
+	/**
+	 * Sets the default Artera_Mongo_Document class used if no mapping is specified
+	 * @param string $documentClass A subclass of Artera_Mongo_Document
+	 */
+	public static function setDefaultDocumentClass($documentClass) {
+		if (!is_subclass_of($documentClass, 'Artera_Mongo_Document'))
+			throw new Artera_Mongo_Exception('$documentClass must be a subclass of Artera_Mongo_Document');
+		self::$_defaultDocumentClass = $documentClass;
 	}
 
 	/**
@@ -167,7 +177,7 @@ class Artera_Mongo extends Mongo {
 		if (array_key_exists($collection, self::$_map))
 			return new self::$_map[$collection]($data, null, $collection);
 		else
-			return new Artera_Mongo_Document($data, null, $collection);
+			return new self::$_defaultDocumentClass($data, null, $collection);
 	}
 
 	/**

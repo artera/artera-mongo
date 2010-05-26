@@ -1,9 +1,5 @@
 <?php
 /**
- * @category   Artera
- * @package    Artera_Mongo
- */
-/**
  * This class represents a Mongo Document. Any custom Document should extend this class.
  * Since the {@link __construct contructor} is used internally by Artera_Mongo you should not override it.
  * If you need to run some code on a Document initialization you should override {@link initialize}
@@ -208,6 +204,7 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Counta
 // 				throw new Artera_Mongo_Exception("The '$' character must not be the first character in the key name.");
 		$this->fireEvent("pre-set", array($name, $this->__get($name), &$value));
 		$this->fireEvent("pre-set-$name", array($name, $this->__get($name), &$value));
+		$this->fireEvent("internal-pre-set", array($name, $this->__get($name), &$value));
 		if (is_null($value)) {
 			if (array_key_exists($name, $this->_data))
 				$this->_unsetdata[] = $name;
