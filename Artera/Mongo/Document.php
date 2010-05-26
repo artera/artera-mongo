@@ -4,6 +4,54 @@
  * @package    Artera_Mongo
  */
 /**
+ * This class represents a Mongo Document. Any custom Document should extend this class.
+ * Since the {@link __construct contructor} is used internally by Artera_Mongo you should not override it.
+ * If you need to run some code on a Document initialization you should override {@link initialize}
+ * instead and if you really need to override the {@link __construct constructor} you should not modify its signature.
+ *
+ * You can set any field you want on a Document at runtime without having to define it first.
+ * There are different methods you can use to do so:
+ * <code>
+ * <?php
+ * $mydocument->name = 'Simpler method';
+ * $mydocument->__set('problematic field name!', 'No problem');
+ * $mydocument['description'] = 'This works too';
+ * ?>
+ * </code>
+ *
+ * By extending {@link Artera_Events} Artera_Mongo_Document supports event dispatching.
+ * There are several events that are fired by Artera_Mongo_Document:
+ * <ul>
+ *   <li>pre-set ($fieldname, $oldvalue, &$newvalue)</li>
+ *   <li>pre-set-$fieldname ($fieldname, $oldvalue, &$newvalue)</li>
+ *   <li>pre-save ($document)</li>
+ *   <li>pre-insert ($document)</li>
+ *   <li>pre-update ($document)</li>
+ *   <li>post-save ($document)</li>
+ *   <li>post-insert ($document)</li>
+ *   <li>post-update ($document)</li>
+ * </ul>
+ *
+ * <code>
+ * <?php
+ * class BlogPost extends Artera_Mongo_Document {
+ *   public function initialize() {
+ *     $this->addEvent('pre-set-title', array(&$this, 'cleanTitle'));
+ *   }
+ *
+ *   protected function cleanTitle($name, $oldvalue, &$newvalue) {
+ *     if (empty($newvalue))
+ *       $newvalue = $oldvalue;
+ *     else
+ *       $newvalue = ucfirst(trim($newvalue));
+ *   }
+ * }
+ *
+ * $post = new BlogPost;
+ * $post->title = '  new post ';
+ * echo $post->title; //New post
+ * ?>
+ * </code>
  * @package    Artera_Mongo
  * @copyright  Artera S.r.l.
  * @license    http://opensource.org/licenses/bsd-license.php New BSD License
@@ -36,7 +84,7 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Counta
 	public function initialize() {}
 
 	/**
-	 * Returns defined indexes for the collection mapped to this document
+	 * Returns defined indexes for the collection mapped to this document.
 	 *
 	 * @return mixed
 	 */
@@ -55,7 +103,7 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Counta
 	}
 
 	/**
-	 * Returns the parent Artera_Mongo_Document if present, NULL if not parent is found
+	 * Returns the parent Artera_Mongo_Document if present, NULL if no parent is found.
 	 *
 	 * @return Artera_Mongo_Document
 	 */
@@ -66,6 +114,22 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Counta
 		return $parent;
 	}
 
+	/**
+	 * This method is used to query the collection mapped to this Document and works similarly to its
+	 * {@link http://www.php.net/manual/en/mongocollection.find.php MongoCollection} equivalent except that
+	 * it has been modified to also accept an id (both as string or {@link http://www.php.net/manual/en/class.mongoid.php MongoId})
+	 * as its first parameter.
+	 * <code>
+	 * <?php
+	 * class BlogPosts extends Artera_Mongo_Document {}
+	 * Artera_Mongo::map('posts', 'BlogPosts');
+	 * $posts = BlogPosts::find(array('author' => 'Foo Bar'))->limit(10);
+	 * ?>
+	 * </code>
+	 * @param mixed $query The query or a document id
+	 * @param mixed $fields An optional subset of fields to retrieve from the collection
+	 * @return Artera_Mongo_Cursor
+	 */
 	public static function find($query=array(), $fields=array()) {
 		if (is_string($query)) $query = new MongoId($query);
 		if ($query instanceof MongoId) $query = array('_id' => $query);
@@ -73,6 +137,22 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Counta
 		return $coll->find($query, $fields);
 	}
 
+	/**
+	 * This method is used to query the collection mapped to this Document and works similarly to its
+	 * {@link http://www.php.net/manual/en/mongocollection.findOne.php MongoCollection} equivalent except that
+	 * it has been modified to also accept an id (both as string or {@link http://www.php.net/manual/en/class.mongoid.php MongoId})
+	 * as its first parameter.
+	 * <code>
+	 * <?php
+	 * class BlogPosts extends Artera_Mongo_Document {}
+	 * Artera_Mongo::map('posts', 'BlogPosts');
+	 * $post = BlogPosts::findOne($_GET['id']);
+	 * ?>
+	 * </code>
+	 * @param mixed $query The query or a document id
+	 * @param mixed $fields An optional subset of fields to retrieve from the collection
+	 * @return Artera_Mongo_Document
+	 */
 	public static function findOne($query=array(), $fields=array()) {
 		if (is_string($query)) $query = new MongoId($query);
 		if ($query instanceof MongoId) $query = array('_id' => $query);
@@ -80,6 +160,10 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Counta
 		return $coll->findOne($query, $fields);
 	}
 
+	/**
+	 * Returns a {@link http://www.php.net/manual/en/class.mongodbref.php MongoDBRef reference} to this document.
+	 * @return MongoDBRef
+	 */
 	public function reference() {
 		if ($this->isReference())
 			return $this->_reference;
@@ -147,6 +231,12 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Counta
 		return $this;
 	}
 
+	/**
+	 * Removes elements matching the query param or the document instance if no query is specified.
+	 * This method can be called both statically and dynamically, but the query parameter is only required if it is called statically.
+	 * @param mixed $query If no query is specified, delete this document.
+	 * @return Artera_Mongo_Document $this
+	 */
 	public function remove($query=null) {
 		if (is_null($query) && !isset($this))
 			throw new Artera_Mongo_Exception('The remove method cannot be called statically without parameters. If you really want to remove every document in the collection call Artera_Mongo_Document::remove(array());');
@@ -161,6 +251,10 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Counta
 		return $this;
 	}
 
+	/**
+	 * Returns the number of fields in this document.
+	 * @return int
+	 */
 	public function count() { return count($this->data(false)); }
 	public function offsetSet($offset, $value) { return $this->__set($offset, $value); }
 	public function offsetExists($offset) { return $this->__isset($offset); }
@@ -194,6 +288,9 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Counta
 			return $this->data();
 	}
 
+	/**
+	 * Save the document to the mapped collection.
+	 */
 	public function save() {
 		if (!$this->isReference() && !is_null($this->parent()) && !array_key_exists('_id', $this->_data)) {
 			$root = $this;
