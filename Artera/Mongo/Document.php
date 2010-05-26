@@ -54,12 +54,16 @@
  * @author     Massimiliano Torromeo
  */
 class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Countable {
+	/**#@+
+	 * @access private
+	 */
 	protected $_data = array();
 	protected $_newdata = array();
 	protected $_unsetdata = array();
-	public $collection = null;
 	protected $_reference = null;
 	protected $_parent = null;
+	/**#@-*/
+	public $collection = null;
 
 	public function __construct($data=array(), $parent=null, $collection=null) {
 		if (!is_array($data))
@@ -111,10 +115,12 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Counta
 	}
 
 	/**
+	 * Query all elements matching $query from the collection of this document
 	 * This method is used to query the collection mapped to this Document and works similarly to its
 	 * {@link http://www.php.net/manual/en/mongocollection.find.php MongoCollection} equivalent except that
 	 * it has been modified to also accept an id (both as string or {@link http://www.php.net/manual/en/class.mongoid.php MongoId})
-	 * or a JS function that will automatically be converted to MongoCode if the string starts with 'function' as its first parameter.
+	 * or a JS function that will automatically be converted to {@link http://www.php.net/manual/en/class.mongocode.php MongoCode}
+	 * if the string starts with 'function' as its first parameter.
 	 * <code>
 	 * <?php
 	 * class BlogPosts extends Artera_Mongo_Document {}
@@ -135,10 +141,12 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Counta
 	}
 
 	/**
+	 * Query one element from the collection of this document
 	 * This method is used to query the collection mapped to this Document and works similarly to its
 	 * {@link http://www.php.net/manual/en/mongocollection.findOne.php MongoCollection} equivalent except that
 	 * it has been modified to also accept an id (both as string or {@link http://www.php.net/manual/en/class.mongoid.php MongoId})
-	 * or a JS function that will automatically be converted to MongoCode if the string starts with 'function' as its first parameter.
+	 * or a JS function that will automatically be converted to {@link http://www.php.net/manual/en/class.mongocode.php MongoCode}
+	 * if the string starts with 'function' as its first parameter.
 	 * <code>
 	 * <?php
 	 * class BlogPosts extends Artera_Mongo_Document {}
