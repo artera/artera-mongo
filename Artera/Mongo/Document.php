@@ -62,26 +62,33 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Counta
 	protected $_unsetdata = array();
 	protected $_reference = null;
 	protected $_parent = null;
+	protected $_collection = null;
 	/**#@-*/
-	public $collection = null;
 
 	public function __construct($data=array(), $parent=null, $collection=null) {
 		if (!is_array($data))
 			throw new Artera_Mongo_Exception('Invalid data provided to the document. $data is not an array.');
-
-		if (is_null($collection))
-			$this->collection = Artera_Mongo::documentCollection(get_class($this));
-		elseif ($collection instanceof Artera_Mongo_Collection)
-			$this->collection = $collection;
-		else
-			$this->collection = Artera_Mongo::defaultDB()->selectCollection($collection);
-
-		$this->setData($data, true);
-		$this->setParent($parent);
-		$this->initialize();
+		$this->setCollection($collection)->setData($data, true)->setParent($parent)->initialize();
 	}
 
-	public function initialize() {}
+	public function initialize() { return $this; }
+
+	public function collection() {
+		if (isset($this))
+			return Artera_Mongo::defaultDB()->selectCollection($this->_collection);
+		else
+			return Artera_Mongo::documentCollection(get_called_class());
+	}
+
+	public function setCollection($collection=null) {
+		if (is_null($collection))
+			$this->_collection = Artera_Mongo::documentCollection(get_class($this))->getName();
+		elseif ($collection instanceof Artera_Mongo_Collection || $collection instanceof MongoCollection)
+			$this->_collection = $collection->getName();
+		else
+			$this->_collection = $collection;
+		return $this;
+	}
 
 	/**
 	 * Returns defined indexes for the collection mapped to this document.
@@ -100,6 +107,7 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Counta
 		if (!is_null($parent) && !$parent instanceof Artera_Mongo_Document && !$parent instanceof Artera_Mongo_Document_Set)
 			throw new Artera_Mongo_Exception('Invalid parent. Parent must be one of NULL, Artera_Mongo_Document or Artera_Mongo_Document_Set');
 		$this->_parent = $parent;
+		return $this;
 	}
 
 	/**
@@ -172,7 +180,7 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Counta
 	public function reference() {
 		if ($this->isReference())
 			return $this->_reference;
-		return $this->collection->createDBRef($this->data(false));
+		return $this->collection()->createDBRef($this->data(false));
 	}
 
 	public function isReference() {
@@ -181,10 +189,11 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Counta
 
 	public function setReference($reference) {
 		$this->_reference = $reference;
+		return $this;
 	}
 
 	public function getDBRef($reference) {
-		$doc = $this->collection->getDBRef($reference);
+		$doc = $this->collection()->getDBRef($reference);
 		$doc->setParent($this);
 		return $doc;
 	}
@@ -222,10 +231,11 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Counta
 		} else {
 			$this->_newdata[$name] = $this->translate($name, $value);
 		}
+		return $this;
 	}
 
 	protected function translate($name, $value, $originalData=false) {
-		return Artera_Mongo::documentOrSet($value, $this->collection->getName().".$name", $this, $originalData);
+		return Artera_Mongo::documentOrSet($value, "{$this->_collection}.$name", $this, $originalData);
 	}
 
 	public function setData(array $data, $originalData=false) {
@@ -248,9 +258,9 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Counta
 			throw new Artera_Mongo_Exception('The remove method cannot be called statically without parameters. If you really want to remove every document in the collection call Artera_Mongo_Document::remove(array());');
 
 		if (is_null($query)) {
-			$this->collection->remove(array('_id' => $this->_id));
+			$this->collection()->remove(array('_id' => $this->_id));
 		} else {
-			$collection = isset($this) ? $this->collection : Artera_Mongo::documentCollection(get_called_class());
+			$collection = isset($this) ? $this->collection() : Artera_Mongo::documentCollection(get_called_class());
 			$collection->remove($query);
 		}
 
@@ -264,7 +274,7 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Counta
 	public function count() { return count($this->data(false)); }
 	public function offsetSet($offset, $value) { return $this->__set($offset, $value); }
 	public function offsetExists($offset) { return $this->__isset($offset); }
-	public function offsetUnset($offset) { $this->__set($offset, null); }
+	public function offsetUnset($offset) { return $this->__set($offset, null); }
 	public function offsetGet($offset) { return $this->__get($offset); }
 
 	public function modified() {
@@ -317,7 +327,8 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Counta
 
 		if ($isInsert) {
 			$insdata = $this->data();
-			$this->collection->insert($insdata);
+			$insdata['_class'] = get_class($this);
+			$this->collection()->insert($insdata);
 			$data['_id'] = $insdata['_id'];
 		} else {
 			$update = array();
@@ -346,7 +357,7 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Counta
 					$update['$unset'][$name] = 1;
 			}
 			if (!empty($update))
-				$this->collection->update( array('_id' => $this->_id), $update );
+				$this->collection()->update( array('_id' => $this->_id), $update );
 		}
 
 		$this->_data = $data;
@@ -355,5 +366,7 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Counta
 
 		$this->fireEvent('post-save', array($this));
 		$this->fireEvent('post-'.($isInsert ? 'insert' : 'update'), array($this));
+
+		return $this;
 	}
 }
