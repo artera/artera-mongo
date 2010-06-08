@@ -46,4 +46,11 @@ class Artera_Mongo_Collection {
 		$doc->setReference($ref);
 		return $doc;
 	}
+
+	public function insert($data, $options=array()) {
+		if ($data instanceof Artera_Mongo_Document)
+			return $data->setCollection($this)->save();
+		else
+			return $this->collection->insert($data, $options);
+	}
 }

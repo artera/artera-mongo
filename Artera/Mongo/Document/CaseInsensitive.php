@@ -25,7 +25,7 @@
  * @author     Massimiliano Torromeo
  */
 class Artera_Mongo_Document_CaseInsensitive extends Artera_Mongo_Document {
-	protected static $_cifields = array();
+	public static $_cifields = array();
 
 	public function __construct($data=array(), $parent=null, $collection=null) {
 		parent::__construct($data, $parent, $collection);

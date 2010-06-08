@@ -174,10 +174,14 @@ class Artera_Mongo extends Mongo {
 	 * @return Artera_Mongo_Document
 	 */
 	public static function createDocument($data, $collection) {
-		if (array_key_exists($collection, self::$_map))
-			return new self::$_map[$collection]($data, null, $collection);
+		if (!empty($data['_class']))
+			$class = $data['_class'];
+		elseif (array_key_exists($collection, self::$_map))
+			$class = $_map[$collection];
 		else
-			return new self::$_defaultDocumentClass($data, null, $collection);
+			$class = self::$_defaultDocumentClass;
+
+		return new $class($data, null, $collection);
 	}
 
 	/**
