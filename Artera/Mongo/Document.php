@@ -53,7 +53,7 @@
  * @license    http://opensource.org/licenses/bsd-license.php New BSD License
  * @author     Massimiliano Torromeo
  */
-class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Countable {
+class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Iterator, Countable {
 	protected $_data = array();
 	protected $_newdata = array();
 	protected $_unsetdata = array();
@@ -258,6 +258,27 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Counta
 	public function offsetExists($offset) { return $this->__isset($offset); }
 	public function offsetUnset($offset) { $this->__set($offset, null); }
 	public function offsetGet($offset) { return $this->__get($offset); }
+
+	public function rewind() {
+		reset($this->_data);
+		reset($this->_newdata);
+	}
+	public function current() {
+		return $this->offsetGet($this->key());
+	}
+	public function key() {
+		$key = key($this->_data);
+		return is_null($key) || in_array($key, $this->_unsetdata) ? key($this->_newdata) : $key;
+	}
+	public function next() {
+		if (key($this->_data) !== null)
+			return next($this->_data);
+		else
+			return next($this->_newdata);
+	}
+	public function valid() {
+		return $this->key() !== null;
+	}
 
 	public function modified() {
 		return count($this->_newdata) || count($this->_unsetdata);
