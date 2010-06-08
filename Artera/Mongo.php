@@ -177,7 +177,7 @@ class Artera_Mongo extends Mongo {
 		if (!empty($data['_class']))
 			$class = $data['_class'];
 		elseif (array_key_exists($collection, self::$_map))
-			$class = $_map[$collection];
+			$class = self::$_map[$collection];
 		else
 			$class = self::$_defaultDocumentClass;
 
