@@ -10,7 +10,7 @@
  * <code>
  * <?php
  * class BlogPost extends Artera_Mongo_Document_CaseInsensitive {
- *   protected static $_cifields = array('name');
+ *   public static $_cifields = array('name');
  * }
  *
  * $post_ci_sorted = BlogPost::find()->limit(10)->sort('_ci_name');
