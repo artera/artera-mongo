@@ -163,6 +163,8 @@ class Artera_Mongo extends Mongo {
 				$data->setParent($parent);
 			if (!$originalData)
 				$data->setData($loadData);
+		} elseif (($data instanceof Artera_Mongo_Document || $data instanceof Artera_Mongo_Document_Set) && $parent !== false) {
+			$data->setParent($parent);
 		}
 		return $data;
 	}

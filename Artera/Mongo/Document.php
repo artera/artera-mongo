@@ -220,6 +220,16 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Iterat
 			throw new Artera_Mongo_Exception("The '.' character must not appear anywhere in the key name.");
 // 			if (strlen($name)>0 && $name[0]=='$')
 // 				throw new Artera_Mongo_Exception("The '$' character must not be the first character in the key name.");
+		if (!is_null($this->parent())) {
+			if ($this->_parent instanceof Artera_Mongo_Document_Set) {
+				$eventFieldName = explode('.', $this->_parent->parentPath);
+				$eventFieldName = implode('.', array_slice($eventFieldName,1)).".$.$name";
+				$pdoc = $this->parentDocument();
+				$pdoc->fireEvent("pre-set", array($eventFieldName, $this->__get($name), &$value));
+				$pdoc->fireEvent("pre-set-$eventFieldName", array($eventFieldName, $this->__get($name), &$value));
+				$pdoc->fireEvent("internal-pre-set", array($eventFieldName, $this->__get($name), &$value));
+			}
+		}
 		$this->fireEvent("pre-set", array($name, $this->__get($name), &$value));
 		$this->fireEvent("pre-set-$name", array($name, $this->__get($name), &$value));
 		$this->fireEvent("internal-pre-set", array($name, $this->__get($name), &$value));

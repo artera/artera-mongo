@@ -11,7 +11,7 @@
  */
 class Artera_Mongo_Document_Set implements ArrayAccess, Iterator, Countable {
 	protected $elements = array();
-	protected $parentPath = null;
+	public $parentPath = null;
 	protected $elementPath = null;
 	protected $modified = false;
 	protected $root = null;
@@ -90,6 +90,7 @@ class Artera_Mongo_Document_Set implements ArrayAccess, Iterator, Countable {
 
 		$this->modified = true;
 		$value = $this->translate($value);
+		$value->setParent($this);
 		if (is_null($offset))
 			$this->elements[] = $value;
 		else
