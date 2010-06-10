@@ -90,7 +90,6 @@ class Artera_Mongo_Document_Set implements ArrayAccess, Iterator, Countable {
 
 		$this->modified = true;
 		$value = $this->translate($value);
-		$value->setParent($this);
 		if (is_null($offset))
 			$this->elements[] = $value;
 		else
