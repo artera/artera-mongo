@@ -122,6 +122,12 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Iterat
 		return $parent;
 	}
 
+	protected static function parseSimpleQuery($query) {
+		if (is_string($query)) $query = substr($query,0,8)=='function' ? new MongoCode($query) : new MongoId($query);
+		if ($query instanceof MongoId) $query = array('_id' => $query);
+		return $query;
+	}
+
 	/**
 	 * Query all elements matching $query from the collection of this document
 	 * This method is used to query the collection mapped to this Document and works similarly to its
@@ -142,10 +148,8 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Iterat
 	 * @return Artera_Mongo_Cursor
 	 */
 	public static function find($query=array(), $fields=array()) {
-		if (is_string($query)) $query = substr($query,0,8)=='function' ? new MongoCode($query) : new MongoId($query);
-		if ($query instanceof MongoId) $query = array('_id' => $query);
 		$coll = Artera_Mongo::documentCollection(get_called_class());
-		return $coll->find($query, $fields);
+		return $coll->find(static::parseSimpleQuery($query), $fields);
 	}
 
 	/**
@@ -167,10 +171,8 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Iterat
 	 * @return Artera_Mongo_Document
 	 */
 	public static function findOne($query=array(), $fields=array()) {
-		if (is_string($query)) $query = substr($query,0,8)=='function' ? new MongoCode($query) : new MongoId($query);
-		if ($query instanceof MongoId) $query = array('_id' => $query);
 		$coll = Artera_Mongo::documentCollection(get_called_class());
-		return $coll->findOne($query, $fields);
+		return $coll->findOne(static::parseSimpleQuery($query), $fields);
 	}
 
 	/**
