@@ -80,4 +80,11 @@ class Artera_Mongo_Cursor implements OuterIterator, Countable {
 	public function count($all = FALSE) {
 		return $this->cursor->count($all);
 	}
+
+	public function toArray() {
+		$elements = array();
+		foreach ($this as $element)
+			$elements[] = $element;
+		return $elements;
+	}
 }
