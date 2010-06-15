@@ -12,7 +12,10 @@
  * }
  *
  * // Find all posts that mention "food"
- * $posts = BlogPost::find(array('keywords' => 'food'));
+ * $posts = BlogPost::find(array('_keywords' => 'food'));
+ *
+ * // Find all posts about "food" and "drinks"
+ * $posts = BlogPost::fullTextSearch(array('food', 'drinks'));
  * ?>
  * </code>
  *
@@ -69,5 +72,24 @@ class Artera_Mongo_Document_FullText extends Artera_Mongo_Document_CaseInsensiti
 
 		if ($rebuild)
 			$this->parseWords();
+	}
+
+	public static function fullTextSearch($keywords, $query=array(), $fields=array()) {
+		$result = null;
+
+		foreach ($keywords as $kw) {
+			$_query = array('_keywords' => $kw);
+
+			if (!is_null($result)) {
+				$ids = array();
+				foreach ($result as $row)
+					$ids[] = $row->_id;
+				$_query = array_merge(array('_id' => array('$in' => $ids)), $_query);
+			}
+
+			$result = static::find( array_merge($_query, static::parseSimpleQuery($_query)), $fields );
+		}
+
+		return $result;
 	}
 }
