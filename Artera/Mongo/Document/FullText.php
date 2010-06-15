@@ -14,8 +14,8 @@
  * // Find all posts that mention "food"
  * $posts = BlogPost::find(array('_keywords' => 'food'));
  *
- * // Find all posts about "food" and "drinks"
- * $posts = BlogPost::fullTextSearch(array('food', 'drinks'));
+ * // Find all posts about "food" and "drink" or "drinks"
+ * $posts = BlogPost::fullTextSearch(array('food', new MongoRegEx('/drinks?/')));
  * ?>
  * </code>
  *
