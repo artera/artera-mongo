@@ -42,8 +42,9 @@ class Artera_Mongo_Document_CaseInsensitive extends Artera_Mongo_Document {
 	protected function setCiVariant($name, $oldvalue, &$newvalue) {
 		if (in_array($name, static::$_cifields)) {
 			if (is_string($newvalue)) {
-				$lvalue = strtolower($newvalue);
-				$this->__set("_ci_$name", $newvalue == $lvalue ? null : $lvalue);
+				//$lvalue = strtolower($newvalue);
+				//$this->__set("_ci_$name", $newvalue == $lvalue ? null : $lvalue);
+				$this->__set("_ci_$name", strtolower($newvalue));
 			} else {
 				$this->__set("_ci_$name", null);
 			}
