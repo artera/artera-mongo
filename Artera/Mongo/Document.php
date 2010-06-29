@@ -296,7 +296,9 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Iterat
 			throw new Artera_Mongo_Exception('The remove method cannot be called statically without parameters. If you really want to remove every document in the collection call Artera_Mongo_Document::remove(array());');
 
 		if (is_null($query)) {
+			$this->fireEvent('pre-remove', array($this));
 			$this->collection()->remove(array('_id' => $this->_id));
+			$this->fireEvent('post-remove', array($this));
 		} else {
 			$collection = isset($this) ? $this->collection() : Artera_Mongo::documentCollection(get_called_class());
 			$collection->remove($query);
