@@ -68,7 +68,8 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Iterat
 	public function __construct($data=array(), $parent=null, $collection=null) {
 		if (!is_array($data))
 			throw new Artera_Mongo_Exception('Invalid data provided to the document. $data is not an array.');
-		$this->setCollection($collection)->setData($data, true)->setParent($parent)->initialize();
+		if (is_null($this->collection) || !is_null($collection))
+			$this->setCollection($collection)->setData($data, true)->setParent($parent)->initialize();
 	}
 
 	public function initialize() { return $this; }
