@@ -175,6 +175,31 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Iterat
 		return $coll->findOne(static::parseSimpleQuery($query), $fields);
 	}
 
+	public static function mapReduce($map, $reduce, $query=null, $sort=null, $limit=null, $out=null, $finalize=null, $scope=null) {
+		$db = Artera_Mongo::defaultDB();
+		$coll = Artera_Mongo::documentCollection(get_called_class());
+
+		$command = array(
+			'mapreduce' => $coll->getName(),
+			'map' => $map instanceof MongoCode ? $map : new MongoCode($map),
+			'reduce' => $reduce instanceof MongoCode ? $reduce : new MongoCode($reduce)
+		);
+		if (is_array($query)) $command['query'] = $query;
+		if (is_array($sort)) $command['sort'] = $sort;
+		if (is_int($limit)) $command['limit'] = $limit;
+		if (is_string($out)) $command['out'] = $out;
+		if (!is_null($finalize))
+			$command['finalize'] = $finalize instanceof MongoCode ? $finalize : new MongoCode($finalize);
+		if (is_array($scope)) $command['scope'] = $scope;
+
+		$result = $db->command($command);
+		if ($result['ok'] == 1) {
+			return $db->selectCollection($result['result']);
+		} else {
+			throw new Artera_Mongo_Exception($result['errmsg']);
+		}
+	}
+
 	/**
 	 * Returns a {@link http://www.php.net/manual/en/class.mongodbref.php MongoDBRef reference} to this document.
 	 * @return MongoDBRef
