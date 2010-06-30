@@ -32,12 +32,13 @@ class Artera_Mongo extends Mongo {
 	/**
 	 * Initializes database indexes if defined in the document classes that have been mapped
 	 */
-	public function initialize() {
+	public function initialize($force=false) {
 		$collections = array();
-		foreach (self::defaultDB()->listCollections() as $collection)
-			$collections[] = $collection->getName();
+		if (!$force)
+			foreach (self::defaultDB()->listCollections() as $collection)
+				$collections[] = $collection->getName();
 		foreach (self::$_map as $collection => $class)
-			if (!in_array($collection, $collections)) {
+			if ($force || !in_array($collection, $collections)) {
 				$c = self::defaultDB()->createCollection($collection);
 				foreach ($class::indexes() as $index) {
 					$index = (array)$index;
@@ -51,6 +52,7 @@ class Artera_Mongo extends Mongo {
 					$c->ensureIndex($fields, $options);
 				}
 			}
+		return $this;
 	}
 
 	/**

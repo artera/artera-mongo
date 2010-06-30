@@ -13,7 +13,7 @@
  *   public static $_cifields = array('name');
  * }
  *
- * $post_ci_sorted = BlogPost::find()->limit(10)->sort('_ci_name');
+ * $post_ci_sorted = BlogPost::find()->limit(10)->sort(array('_ci_name' => 1));
  * ?>
  * </code>
  *
