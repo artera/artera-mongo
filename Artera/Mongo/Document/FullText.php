@@ -87,7 +87,7 @@ class Artera_Mongo_Document_FullText extends Artera_Mongo_Document_CaseInsensiti
 				$_query = array_merge(array('_id' => array('$in' => $ids)), $_query);
 			}
 
-			$result = static::find( array_merge($_query, static::parseSimpleQuery($_query)), $fields );
+			$result = static::find( array_merge($query, static::parseSimpleQuery($_query)), $fields );
 		}
 
 		return $result;
