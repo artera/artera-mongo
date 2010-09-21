@@ -222,6 +222,7 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Iterat
 
 	public function getDBRef($reference) {
 		$doc = $this->collection()->getDBRef($reference);
+		if (is_null($doc)) return null;
 		$doc->setParent($this);
 		return $doc;
 	}

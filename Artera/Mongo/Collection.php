@@ -42,7 +42,9 @@ class Artera_Mongo_Collection {
 	}
 
 	public function getDBRef($ref) {
-		$doc = Artera_Mongo::createDocument($this->collection->getDBRef($ref), $ref['$ref']);
+		$data = $this->collection->getDBRef($ref);
+		if (is_null($data)) return null;
+		$doc = Artera_Mongo::createDocument($data, $ref['$ref']);
 		$doc->setReference($ref);
 		return $doc;
 	}

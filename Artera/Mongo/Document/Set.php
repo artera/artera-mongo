@@ -62,6 +62,7 @@ class Artera_Mongo_Document_Set implements ArrayAccess, Iterator, Countable {
 
 	public function getDBRef($reference) {
 		$doc = $this->rootCollection()->getDBRef($reference);
+		if (is_null($doc)) return null;
 		$doc->setParent($this);
 		return $doc;
 	}
