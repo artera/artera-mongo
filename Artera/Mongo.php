@@ -154,10 +154,15 @@ class Artera_Mongo extends Mongo {
 	 * @return mixed
 	 */
 	public static function documentOrSet($data, $path, $parent=false, $originalData=false) {
+		if ($data === null)
+			return null;
+
 		if (!$originalData)
 			$loadData = $data;
+
 		if (is_array($data) && !MongoDBRef::isRef($data)) {
-			if (key($data) != null && !is_int(key($data)))
+			$k = key($data);
+			if ($k != null && !is_int($k))
 				$data = self::createDocument($originalData ? $data : array(), $path);
 			else
 				$data = new Artera_Mongo_Document_Set($originalData ? $data : array(), $path);
@@ -165,9 +170,10 @@ class Artera_Mongo extends Mongo {
 				$data->setParent($parent);
 			if (!$originalData)
 				$data->setData($loadData);
-		} elseif (($data instanceof Artera_Mongo_Document || $data instanceof Artera_Mongo_Document_Set) && $parent !== false) {
+		} elseif ($parent !== false && ($data instanceof Artera_Mongo_Document || $data instanceof Artera_Mongo_Document_Set)) {
 			$data->setParent($parent);
 		}
+
 		return $data;
 	}
 
