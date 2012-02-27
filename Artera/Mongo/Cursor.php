@@ -34,7 +34,7 @@ class Artera_Mongo_Cursor implements OuterIterator, Countable {
 	 */
 	public function current() {
 		$current = $this->getInnerIterator()->current();
-		if (!is_null($current))
+		if ($current !== null)
 			$current = Artera_Mongo::createDocument($current, $this->collection->getName());
 		return $current;
 	}
@@ -72,7 +72,7 @@ class Artera_Mongo_Cursor implements OuterIterator, Countable {
 
 	public function getNext() {
 		$next = $this->cursor->getNext();
-		if (!is_null($next))
+		if ($next !== null)
 			$next = Artera_Mongo::createDocument($next, $this->collection->getName());
 		return $next;
 	}

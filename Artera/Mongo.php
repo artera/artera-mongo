@@ -60,7 +60,7 @@ class Artera_Mongo extends Mongo {
 	 * @return Artera_Mongo_DB
 	 */
 	public static function defaultDB() {
-		if (is_null(self::$_connection))
+		if (self::$_connection === null)
 			throw new Artera_Mongo_Exception;
 		else
 			return self::$_connection->selectDB(self::$_defaultDB);

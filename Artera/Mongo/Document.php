@@ -68,7 +68,7 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Iterat
 	public function __construct($data=array(), $parent=null, $collection=null) {
 		if (!is_array($data))
 			throw new Artera_Mongo_Exception('Invalid data provided to the document. $data is not an array.');
-		if (is_null($this->collection) || !is_null($collection))
+		if ($this->collection === null || $collection !== null)
 			$this->setCollection($collection)->setData($data, true)->setParent($parent)->initialize();
 	}
 
@@ -82,7 +82,7 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Iterat
 	}
 
 	public function setCollection($collection=null) {
-		if (is_null($collection))
+		if ($collection === null)
 			$this->_collection = Artera_Mongo::documentCollection(get_class($this))->getName();
 		elseif ($collection instanceof Artera_Mongo_Collection || $collection instanceof MongoCollection)
 			$this->_collection = $collection->getName();
@@ -105,7 +105,7 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Iterat
 	}
 
 	public function setParent($parent) {
-		if (!is_null($parent) && !$parent instanceof Artera_Mongo_Document && !$parent instanceof Artera_Mongo_Document_Set)
+		if ($parent !== null && !$parent instanceof Artera_Mongo_Document && !$parent instanceof Artera_Mongo_Document_Set)
 			throw new Artera_Mongo_Exception('Invalid parent. Parent must be one of NULL, Artera_Mongo_Document or Artera_Mongo_Document_Set');
 		$this->_parent = $parent;
 		return $this;
@@ -118,7 +118,7 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Iterat
 	 */
 	public function parentDocument() {
 		$parent = $this->parent();
-		while (!is_null($parent) && !($parent instanceof Artera_Mongo_Document))
+		while ($parent !== null && !($parent instanceof Artera_Mongo_Document))
 			$parent = $parent->parent();
 		return $parent;
 	}
@@ -189,7 +189,7 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Iterat
 		if (is_array($sort)) $command['sort'] = $sort;
 		if (is_int($limit)) $command['limit'] = $limit;
 		if (is_string($out)) $command['out'] = $out;
-		if (!is_null($finalize))
+		if ($finalize !== null)
 			$command['finalize'] = $finalize instanceof MongoCode ? $finalize : new MongoCode($finalize);
 		if (is_array($scope)) $command['scope'] = $scope;
 
@@ -212,7 +212,7 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Iterat
 	}
 
 	public function isReference() {
-		return !is_null($this->_reference);
+		return $this->_reference !== null;
 	}
 
 	public function setReference($reference) {
@@ -222,7 +222,7 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Iterat
 
 	public function getDBRef($reference) {
 		$doc = $this->collection()->getDBRef($reference);
-		if (is_null($doc)) return null;
+		if ($doc === null) return null;
 		$doc->setParent($this);
 		return $doc;
 	}
@@ -249,7 +249,7 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Iterat
 			throw new Artera_Mongo_Exception("The '.' character must not appear anywhere in the key name.");
 // 			if (strlen($name)>0 && $name[0]=='$')
 // 				throw new Artera_Mongo_Exception("The '$' character must not be the first character in the key name.");
-		if (!is_null($this->parent())) {
+		if ($this->parent() !== null) {
 			if ($this->_parent instanceof Artera_Mongo_Document_Set) {
 				$eventFieldName = explode('.', $this->_parent->parentPath);
 				$eventFieldName = implode('.', array_slice($eventFieldName,1)).".$.$name";
@@ -262,7 +262,7 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Iterat
 		$this->fireEvent("pre-set", array($name, $this->__get($name), &$value));
 		$this->fireEvent("pre-set-$name", array($name, $this->__get($name), &$value));
 		$this->fireEvent("internal-pre-set", array($name, $this->__get($name), &$value));
-		if (is_null($value)) {
+		if ($value === null) {
 			if (array_key_exists($name, $this->_data))
 				$this->_unsetdata[] = $name;
 			if (array_key_exists($name, $this->_newdata))
@@ -293,10 +293,10 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Iterat
 	 * @return Artera_Mongo_Document $this
 	 */
 	public function remove($query=null) {
-		if (is_null($query) && !isset($this))
+		if ($query === null && !isset($this))
 			throw new Artera_Mongo_Exception('The remove method cannot be called statically without parameters. If you really want to remove every document in the collection call Artera_Mongo_Document::remove(array());');
 
-		if (is_null($query)) {
+		if ($query === null) {
 			$this->fireEvent('pre-remove', array($this));
 			$this->collection()->remove(array('_id' => $this->_id));
 			$this->fireEvent('post-remove', array($this));
@@ -327,7 +327,7 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Iterat
 	}
 	public function key() {
 		$key = key($this->_data);
-		return is_null($key) || in_array($key, $this->_unsetdata) ? key($this->_newdata) : $key;
+		return $key === null || in_array($key, $this->_unsetdata) ? key($this->_newdata) : $key;
 	}
 	public function next() {
 		if (key($this->_data) !== null)
@@ -370,9 +370,9 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Iterat
 	 * Save the document to the mapped collection.
 	 */
 	public function save() {
-		if (!$this->isReference() && !is_null($this->parent()) && !array_key_exists('_id', $this->_data)) {
+		if (!$this->isReference() && $this->parent() !== null && !array_key_exists('_id', $this->_data)) {
 			$root = $this;
-			while (!is_null($root->parent()))
+			while ($root->parent() !== null)
 				$root = $root->parent();
 			if ($root instanceof Artera_Mongo_Document_Set)
 				throw new Artera_Mongo_Exception('Invalid Document_Set. A Document_Set must have a parent.');
@@ -406,7 +406,7 @@ class Artera_Mongo_Document extends Artera_Events implements ArrayAccess, Iterat
 				if (!isset($update['$set'][$field])) {
 					if ($olddata instanceof Artera_Mongo_Document_Set) {
 						$olddata = $olddata->savedata();
-						if (!is_null($olddata))
+						if ($olddata !== null)
 							$update['$set'][$field] = $olddata;
 					} elseif ($olddata instanceof Artera_Mongo_Document && $olddata->modified() && !$olddata->isReference()) {
 						$update['$set'][$field] = $olddata->savedata();

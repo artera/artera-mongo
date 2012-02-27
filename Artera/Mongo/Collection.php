@@ -37,13 +37,13 @@ class Artera_Mongo_Collection {
 		if (is_string($query)) $query = new MongoId($query);
 		if ($query instanceof MongoId) $query = array('_id' => $query);
 		$data = $this->collection->findOne($query, $fields);
-		if (is_null($data)) return null;
+		if ($data === null) return null;
 		return Artera_Mongo::createDocument($data, $this->collection->getName());
 	}
 
 	public function getDBRef($ref) {
 		$data = $this->collection->getDBRef($ref);
-		if (is_null($data)) return null;
+		if ($data === null) return null;
 		$doc = Artera_Mongo::createDocument($data, $ref['$ref']);
 		$doc->setReference($ref);
 		return $doc;

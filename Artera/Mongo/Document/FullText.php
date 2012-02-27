@@ -82,7 +82,7 @@ class Artera_Mongo_Document_FullText extends Artera_Mongo_Document_CaseInsensiti
 				$kw = strtolower($kw);
 			$_query = array('_keywords' => $kw);
 
-			if (!is_null($result)) {
+			if ($result !== null) {
 				$ids = array();
 				foreach ($result as $row)
 					$ids[] = $row->_id;

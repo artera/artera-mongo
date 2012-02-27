@@ -30,7 +30,7 @@ class Artera_Mongo_Document_Set implements ArrayAccess, Iterator, Countable {
 	}
 
 	public function setParent($parent) {
-		if (!is_null($parent) && !$parent instanceof Artera_Mongo_Document && !$parent instanceof Artera_Mongo_Document_Set)
+		if ($parent !== null && !$parent instanceof Artera_Mongo_Document && !$parent instanceof Artera_Mongo_Document_Set)
 			throw new Artera_Mongo_Exception('Invalid parent. Parent must be one of NULL, Artera_Mongo_Document or Artera_Mongo_Document_Set');
 		$this->_parent = $parent;
 	}
@@ -42,15 +42,15 @@ class Artera_Mongo_Document_Set implements ArrayAccess, Iterator, Countable {
 	 */
 	public function parentDocument() {
 		$parent = $this->parent();
-		while (!is_null($parent) && !($parent instanceof Artera_Mongo_Document))
+		while ($parent !== null && !($parent instanceof Artera_Mongo_Document))
 			$parent = $parent->parent();
 		return $parent;
 	}
 
 	public function rootDocument() {
-		if (is_null($this->root)) {
+		if ($this->root === null) {
 			$this->root = $this;
-			while (!is_null($this->root->parent()))
+			while ($this->root->parent() !== null)
 				$this->root = $this->root->parent();
 		}
 		return $this->root;
@@ -62,7 +62,7 @@ class Artera_Mongo_Document_Set implements ArrayAccess, Iterator, Countable {
 
 	public function getDBRef($reference) {
 		$doc = $this->rootCollection()->getDBRef($reference);
-		if (is_null($doc)) return null;
+		if ($doc === null) return null;
 		$doc->setParent($this);
 		return $doc;
 	}
@@ -86,12 +86,12 @@ class Artera_Mongo_Document_Set implements ArrayAccess, Iterator, Countable {
 
 	public function offsetSet($offset, $value) {
 		$pdoc = $this->parentDocument();
-		if (!is_null($pdoc))
+		if ($pdoc !== null)
 			$pdoc->fireEvent("pre-set-{$this->elementPath}", array($this->elementPath, $this->offsetGet($offset), &$value));
 
 		$this->modified = true;
 		$value = $this->translate($value);
-		if (is_null($offset))
+		if ($offset === null)
 			$this->elements[] = $value;
 		else
 			$this->elements[$offset] = $value;
